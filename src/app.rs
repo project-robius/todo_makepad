@@ -1,4 +1,6 @@
 use makepad_widgets::*;
+use makepad_widgets::text_input::*;
+
 
 // The live_design macro generates a function that registers a DSL code block with the global
 // context object (`Cx`).
@@ -15,7 +17,6 @@ live_design!{
     import makepad_widgets::frame::Frame;
     import makepad_widgets::label::Label;
     import makepad_widgets::check_box::CheckBox;
-
     import makepad_widgets::text_input::TextInput;
 
     TITLE_TEXT = {
@@ -56,14 +57,6 @@ live_design!{
     }
 
     TodoItem = <CheckBox> {
-        // draw_check: {
-        //     fn pixel(self) -> vec4 {
-        //         let sdf = Sdf2d::viewport(self.pos * self.rect_size)
-                
-        //         return sdf.result
-        //     }
-        // }
-
         draw_check: {
             instance border_width: 1.0
             instance border_color: #223322
@@ -184,6 +177,22 @@ impl AppMain for App{
             return self.ui.draw_widget(&mut draw_cx);
         }
 
-        self.ui.handle_widget_event(cx, event);
+        let mut new_todo:Option<String> = None;
+        for widget_action in self.ui.handle_widget_event(cx, event) {
+            if let TextInputAction::Return(value) = widget_action.action::<TextInputAction>() {
+                new_todo = Some(value);
+                break
+            }
+        }
+
+        if let Some(new_todo_value) = new_todo {
+            if let Some(mut text_input) = self.ui.get_text_input(id!(input)).inner_mut() {
+                println!("{}", new_todo_value);
+
+                // API function to set text needed (cursor also needs to be reseted)
+                text_input.text = "".to_string();
+                text_input.redraw(cx);
+                }
+        }
     }
 }
