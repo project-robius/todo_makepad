@@ -56,39 +56,36 @@ live_design!{
         }
     }
 
-    TodoItem = <CheckBox> {
-        draw_check: {
-            instance border_width: 1.0
-            instance border_color: #223322
-            instance border_color2: #229999
-            size: 20.0,
-        }
-        
-        draw_label: {
-            text_style: <REGULAR_TEXT>{},
-            fn get_color(self) -> vec4 {
-                return mix(
-                    (#333333),
-                    (#111111),
-                    self.selected
-                )
-            }
-        }
-        
-        walk: {margin: {left: 0.0}, width: 800},
-        label_walk: {margin: {left: 50.0}} 
-    }
-
-    TodoList = <Frame> {
+    TodoList = {{TodoList}} {
         layout: {
             flow: Down,
             spacing: 10,
         },
         walk: {width: Fit, height: Fit},
-        <TodoItem> {label: "Clean my house"}
-        <TodoItem> {label: "Build a new application with Makepad"}
-    }
+        checkbox: <CheckBox> {
+            draw_check: {
+                instance border_width: 1.0
+                instance border_color: #223322
+                instance border_color2: #229999
+                size: 20.0,
+            }
     
+            draw_label: {
+                text_style: <REGULAR_TEXT>{},
+                fn get_color(self) -> vec4 {
+                    return mix(
+                        (#333333),
+                        (#111111),
+                        self.selected
+                    )
+                }
+            }
+    
+            walk: {margin: {left: 0.0}, width: 800},
+            label_walk: {margin: {left: 50.0}} 
+        }
+    }
+
     // The `{{App}}` syntax is used to inherit a DSL object from a Rust struct. This tells the
     // Makepad runtime that our DSL object corresponds to a Rust struct named `App`. Whenever an
     // instance of `App` is initialized, the Makepad runtime will obtain its initial values from
@@ -135,7 +132,7 @@ live_design!{
                 walk: {width: Fit, height: Fit}
             }
 
-            <TodoList> {}
+            todo_list = <TodoList> {}
         }}}
     }
 }
@@ -148,6 +145,16 @@ live_design!{
 // handling. On desktop, this means creating and running our own event loop. On web, this means
 // creating an event handler function that the browser event loop can call into.
 app_main!(App);
+
+// #[derive(Live, LiveHook)]
+// #[live_design_with{
+//     widget_factory!(cx, CheckBox)
+// }]
+// pub struct TodoItem {
+// }
+
+#[derive(Clone, Debug, Default, Eq, Hash, Copy, PartialEq, FromLiveId)]
+pub struct CheckBoxId(pub LiveId);
 
 // The main application struct.
 //
@@ -164,6 +171,8 @@ pub struct App {
     // A chromeless window for our application. Used to contain our frame widget.
     // A frame widget. Used to contain our button and label.
     ui: WidgetRef,
+
+    todos: Vec<String>
 }
 
 impl AppMain for App{
@@ -187,12 +196,72 @@ impl AppMain for App{
 
         if let Some(new_todo_value) = new_todo {
             if let Some(mut text_input) = self.ui.get_text_input(id!(input)).inner_mut() {
-                println!("{}", new_todo_value);
+                self.todos.push(new_todo_value);
 
                 // API function to set text needed (cursor also needs to be reseted)
                 text_input.text = "".to_string();
-                text_input.redraw(cx);
-                }
+                text_input.redraw(cx); 
+            }
         }
+
+        if let Some(mut todo_list) = self.ui.get_widget(id!(todo_list)).inner_mut::<TodoList>() {
+            todo_list.set_todos(self.todos.clone());
+        }
+    }
+}
+
+#[derive(Live, LiveHook)]
+#[live_design_with{
+    widget_factory!(cx, TodoList)
+}]
+pub struct TodoList {
+    walk: Walk,
+    layout: Layout,
+    checkbox: Option<LivePtr>,
+    #[rust] todos: Vec<String>,
+    #[rust] items: ComponentMap<CheckBoxId, CheckBox>
+}
+
+impl Widget for TodoList {
+    fn handle_widget_event_with(
+        &mut self,
+        cx: &mut Cx,
+        event: &Event,
+        dispatch_action: &mut dyn FnMut(&mut Cx, WidgetActionItem)
+    ) {
+        // let uid = self.widget_uid();
+        // self.handle_event_with(cx, event, &mut | cx, action | {
+        //     dispatch_action(cx, WidgetActionItem::new(action.into(),uid));
+        // });
+    }
+
+    fn get_walk(&self)->Walk{self.walk}
+    
+    fn redraw(&mut self, cx:&mut Cx){
+        //self.area.redraw(cx)
+    }
+
+    fn draw_walk_widget(&mut self, cx: &mut Cx2d, walk: Walk) -> WidgetDraw {
+        let _ = self.draw_walk(cx, walk);
+        WidgetDraw::done()
+    }
+}
+
+impl TodoList {
+    pub fn draw_walk(&mut self, cx: &mut Cx2d, walk: Walk) {
+        for (i, value) in self.todos.iter().enumerate() {
+            let item_id = LiveId(i as u64).into();
+            let checkbox = self.items.get_or_insert(cx, item_id, | cx | {
+                CheckBox::new_from_ptr(cx, self.checkbox)
+            });
+            
+            checkbox.label = value.clone();
+            checkbox.draw_walk_widget(cx, walk);
+        }
+        self.items.retain_visible();
+    }
+
+    pub fn set_todos(&mut self, todos: Vec<String>) {
+        self.todos = todos
     }
 }
