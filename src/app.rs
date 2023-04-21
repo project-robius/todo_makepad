@@ -228,7 +228,6 @@ pub struct TodoList {
 
     // The "rust" attribute is used to indicate there is no field with those names in the
     // "live design" definitions. Those fields are used in our own Rust code.
-    #[rust] area: Area,
     #[rust] todos: Vec<String>,
     #[rust] items: ComponentMap<CheckBoxId, CheckBox>
 }
@@ -248,8 +247,9 @@ impl Widget for TodoList {
     fn get_walk(&self)->Walk{ self.walk }
     
     fn redraw(&mut self, _cx:&mut Cx){
-        //Question: I noticed many widget from the examples defined an "area", which is
-        //what is usually redrawn. Why I would need to use an area?
+        // Not sure how I can implement this method if I don't have an Area
+        // (which is what I see in many examples).
+        // I don't know what is an Area used for.
 
         //self.area.redraw(cx)
     }
@@ -276,6 +276,8 @@ impl TodoList {
     }
 
     pub fn draw_walk(&mut self, cx: &mut Cx2d, walk: Walk) {
+        // This was needed to apply the layout defined for TodoList in the live design block.
+        // Otherwise, it is ignored.
         cx.begin_turtle(walk, self.layout);
 
         for (i, value) in self.todos.iter().enumerate() {
@@ -288,7 +290,7 @@ impl TodoList {
             let _ = current_checkbox.draw_walk_widget(cx, walk);
         }
 
-        cx.end_turtle_with_area(&mut self.area);
+        cx.end_turtle();
         self.items.retain_visible();
     }
 
