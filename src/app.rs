@@ -60,8 +60,9 @@ live_design!{
         layout: {
             flow: Down,
             spacing: 10,
+            padding: {left: 100}
         },
-        walk: {width: Fit, height: Fit},
+        walk: {width: Fill, height: Fit},
         checkbox: <CheckBox> {
             draw_check: {
                 instance border_width: 1.0
@@ -81,8 +82,8 @@ live_design!{
                 }
             }
     
-            walk: {margin: {left: 0.0}, width: 800},
-            label_walk: {margin: {left: 50.0}} 
+            walk: {margin: {left: 50.0}, width: 800},
+            label_walk: {margin: {left: 50.0}, width: 800} 
         }
     }
 
@@ -116,7 +117,7 @@ live_design!{
                     // Gradient color effect starting from a yellow tone
                     // The final color would be black, however the x value is divided to 3
                     // so the color gets darker slower.
-                    return mix(#ffc654, #0, self.geom_pos.x / 3);
+                    return mix(#b0d1b1, #0, self.geom_pos.x / 3);
                 }
             }
             // A label to display the counter.
@@ -215,29 +216,41 @@ impl AppMain for App{
     widget_factory!(cx, TodoList)
 }]
 pub struct TodoList {
+    // It is mandatory to list here all the fields that are part of the live design block.
+    // You may use `#[live]` but this is the default value, so no need to specify it.
     walk: Walk,
     layout: Layout,
+
+    // This is also refered in the live design block, but it is not meant to be rendered automatically.
+    // This is like a template element, that is used to create concrete instances that are
+    // rendered by the draw_walk function, depending on the list of TODOs.
     checkbox: Option<LivePtr>,
+
+    // The "rust" attribute is used to indicate there is no field with those names in the
+    // "live design" definitions. Those fields are used in our own Rust code.
+    #[rust] area: Area,
     #[rust] todos: Vec<String>,
     #[rust] items: ComponentMap<CheckBoxId, CheckBox>
 }
 
-impl Widget for TodoList {
+impl Widget for TodoList {  
     fn handle_widget_event_with(
         &mut self,
         cx: &mut Cx,
         event: &Event,
         dispatch_action: &mut dyn FnMut(&mut Cx, WidgetActionItem)
     ) {
-        // let uid = self.widget_uid();
-        // self.handle_event_with(cx, event, &mut | cx, action | {
-        //     dispatch_action(cx, WidgetActionItem::new(action.into(),uid));
-        // });
+        self.handle_event_with(cx, event, &mut | cx, action | {
+            dispatch_action(cx, action);
+        });
     }
 
-    fn get_walk(&self)->Walk{self.walk}
+    fn get_walk(&self)->Walk{ self.walk }
     
-    fn redraw(&mut self, cx:&mut Cx){
+    fn redraw(&mut self, _cx:&mut Cx){
+        //Question: I noticed many widget from the examples defined an "area", which is
+        //what is usually redrawn. Why I would need to use an area?
+
         //self.area.redraw(cx)
     }
 
@@ -248,16 +261,34 @@ impl Widget for TodoList {
 }
 
 impl TodoList {
+    pub fn handle_event_with(
+        &mut self,
+        cx: &mut Cx,
+        event: &Event,
+        dispatch_action: &mut dyn FnMut(&mut Cx, WidgetActionItem),
+    ) {
+        for (_id, item) in self.items.iter_mut() {
+            let item_uid = item.widget_uid();
+            item.handle_event_with(cx, event, &mut | cx_imm, action | {
+                dispatch_action(cx_imm, WidgetActionItem::new(action.into(), item_uid));
+            });
+        }
+    }
+
     pub fn draw_walk(&mut self, cx: &mut Cx2d, walk: Walk) {
+        cx.begin_turtle(walk, self.layout);
+
         for (i, value) in self.todos.iter().enumerate() {
             let item_id = LiveId(i as u64).into();
-            let checkbox = self.items.get_or_insert(cx, item_id, | cx | {
+            let current_checkbox = self.items.get_or_insert(cx, item_id, | cx | {
                 CheckBox::new_from_ptr(cx, self.checkbox)
             });
             
-            checkbox.label = value.clone();
-            checkbox.draw_walk_widget(cx, walk);
+            current_checkbox.label = value.clone();
+            let _ = current_checkbox.draw_walk_widget(cx, walk);
         }
+
+        cx.end_turtle_with_area(&mut self.area);
         self.items.retain_visible();
     }
 
