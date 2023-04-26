@@ -40,6 +40,10 @@ version = "0.3.0"
 
 [[package]]
 name = "makepad-futures"
+version = "0.1.0"
+
+[[package]]
+name = "makepad-futures-legacy"
 version = "0.3.0"
 
 [[package]]
@@ -110,6 +114,7 @@ name = "makepad-platform"
 version = "0.3.0"
 dependencies = [
  "makepad-futures",
+ "makepad-futures-legacy",
  "makepad-objc-sys",
  "makepad-shader-compiler",
  "makepad-wasm-bridge",

@@ -196,16 +196,16 @@ impl AppMain for App{
         }
 
         if let Some(new_todo_value) = new_todo {
-            if let Some(mut text_input) = self.ui.get_text_input(id!(input)).inner_mut() {
-                self.todos.push(new_todo_value);
+            self.todos.push(new_todo_value);
 
-                // API function to set text needed (cursor also needs to be reseted)
-                text_input.text = "".to_string();
-                text_input.redraw(cx); 
-            }
+            let text_input = self.ui.get_text_input(id!(input));
+            text_input.set_text("");
+
+            // This redraw is needed to have this element and the todo list updated upon pressing Enter
+            text_input.redraw(cx); 
         }
 
-        if let Some(mut todo_list) = self.ui.get_widget(id!(todo_list)).inner_mut::<TodoList>() {
+        if let Some(mut todo_list) = self.ui.get_widget(id!(todo_list)).borrow_mut::<TodoList>() {
             todo_list.set_todos(self.todos.clone());
         }
     }
@@ -229,7 +229,7 @@ pub struct TodoList {
     // The "rust" attribute is used to indicate there is no field with those names in the
     // "live design" definitions. Those fields are used in our own Rust code.
     #[rust] todos: Vec<String>,
-    #[rust] items: ComponentMap<CheckBoxId, CheckBox>
+    #[rust] items: ComponentMap<CheckBoxId, CheckBoxRef>
 }
 
 impl Widget for TodoList {  
@@ -269,9 +269,11 @@ impl TodoList {
     ) {
         for (_id, item) in self.items.iter_mut() {
             let item_uid = item.widget_uid();
-            item.handle_event_with(cx, event, &mut | cx_imm, action | {
-                dispatch_action(cx_imm, WidgetActionItem::new(action.into(), item_uid));
-            });
+            if let Some(mut inner) = item.borrow_mut(){
+                inner.handle_event_with(cx, event, &mut | cx_imm, action | {
+                    dispatch_action(cx_imm, WidgetActionItem::new(action.into(), item_uid));
+                });
+            }
         }
     }
 
@@ -283,10 +285,10 @@ impl TodoList {
         for (i, value) in self.todos.iter().enumerate() {
             let item_id = LiveId(i as u64).into();
             let current_checkbox = self.items.get_or_insert(cx, item_id, | cx | {
-                CheckBox::new_from_ptr(cx, self.checkbox)
+                CheckBoxRef::new_from_ptr(cx, self.checkbox)
             });
             
-            current_checkbox.label = value.clone();
+            current_checkbox.set_label_text(value);
             let _ = current_checkbox.draw_walk_widget(cx, walk);
         }
 
