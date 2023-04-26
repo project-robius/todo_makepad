@@ -190,8 +190,10 @@ impl AppMain for App{
         let mut new_todo:Option<String> = None;
         for widget_action in self.ui.handle_widget_event(cx, event) {
             if let TextInputAction::Return(value) = widget_action.action::<TextInputAction>() {
-                new_todo = Some(value);
-                break
+                if !value.is_empty() {
+                    new_todo = Some(value);
+                    break
+                }
             }
         }
 
