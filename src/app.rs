@@ -15,6 +15,7 @@ live_design!{
 
     import makepad_widgets::desktop_window::DesktopWindow;
     import makepad_widgets::frame::Frame;
+    import makepad_widgets::frame::Image;
     import makepad_widgets::label::Label;
     import makepad_widgets::check_box::CheckBox;
     import makepad_widgets::text_input::TextInput;
@@ -39,7 +40,7 @@ live_design!{
                 color: #0,
                 text_style: <REGULAR_TEXT>{},
             },
-            text: "What is the next to add?"
+            label: "What is the next to add?"
         }
 
         input = <TextInput> {
@@ -96,7 +97,7 @@ live_design!{
         // for other widgets. Since the `ui` property on the DSL object `App` corresponds with the
         // `ui` field on the Rust struct `App`, the latter will be initialized from the DSL object
         // here below.
-        ui: <DesktopWindow>{frame: {body = {        
+        ui: <DesktopWindow>{<Frame>{
             show_bg: true
             layout: {
                 flow: Down,
@@ -126,7 +127,7 @@ live_design!{
                     color: #0,
                     text_style: <TITLE_TEXT>{},
                 },
-                text: "My TODO list"
+                label: "My TODO list"
             }
 
             todo_prompt = <TodoPrompt> {
@@ -134,7 +135,7 @@ live_design!{
             }
 
             todo_list = <TodoList> {}
-        }}}
+        }}
     }
 }
 
@@ -147,13 +148,6 @@ live_design!{
 // creating an event handler function that the browser event loop can call into.
 app_main!(App);
 
-// #[derive(Live, LiveHook)]
-// #[live_design_with{
-//     widget_factory!(cx, CheckBox)
-// }]
-// pub struct TodoItem {
-// }
-
 #[derive(Clone, Debug, Default, Eq, Hash, Copy, PartialEq, FromLiveId)]
 pub struct CheckBoxId(pub LiveId);
 
@@ -162,18 +156,19 @@ pub struct CheckBoxId(pub LiveId);
 // The #[derive(Live, LiveHook)] attribute implements a bunch of traits for this struct that enable
 // it to interact with the Makepad runtime. Among other things, this enables the Makepad runtime to
 // initialize the struct from a DSL object.
-#[derive(Live, LiveHook)]
-// This function is used to register any DSL code that you depend on.
-// called automatically by the code we generated with the call to the macro `main_app` above.
-#[live_design_with {
-    crate::makepad_widgets::live_design(cx);
-}]
+#[derive(Live)]
 pub struct App {
     // A chromeless window for our application. Used to contain our frame widget.
     // A frame widget. Used to contain our button and label.
-    ui: WidgetRef,
+    #[live] ui: WidgetRef,
 
-    todos: Vec<String>
+    #[rust] todos: Vec<String>
+}
+
+impl LiveHook for App {
+    fn before_live_design(cx: &mut Cx) {
+        crate::makepad_widgets::live_design(cx);
+    }
 }
 
 impl AppMain for App{
@@ -183,8 +178,7 @@ impl AppMain for App{
     fn handle_event(&mut self, cx: &mut Cx, event: &Event) {
         if let Event::Draw(event) = event {
             // This is a draw event, so create a draw context and use that to draw our application.
-            let mut draw_cx = Cx2d::new(cx, event);
-            return self.ui.draw_widget(&mut draw_cx);
+            return self.ui.draw_widget_all(&mut Cx2d::new(cx, event));
         }
 
         let mut new_todo:Option<String> = None;
@@ -213,25 +207,28 @@ impl AppMain for App{
     }
 }
 
-#[derive(Live, LiveHook)]
-#[live_design_with{
-    widget_factory!(cx, TodoList)
-}]
+#[derive(Live)]
 pub struct TodoList {
     // It is mandatory to list here all the fields that are part of the live design block.
-    // You may use `#[live]` but this is the default value, so no need to specify it.
-    walk: Walk,
-    layout: Layout,
+    // You need to annotate them with `#[live]`
+    #[live] walk: Walk,
+    #[live] layout: Layout,
 
     // This is also refered in the live design block, but it is not meant to be rendered automatically.
     // This is like a template element, that is used to create concrete instances that are
     // rendered by the draw_walk function, depending on the list of TODOs.
-    checkbox: Option<LivePtr>,
+    #[live] checkbox: Option<LivePtr>,
 
     // The "rust" attribute is used to indicate there is no field with those names in the
     // "live design" definitions. Those fields are used in our own Rust code.
     #[rust] todos: Vec<String>,
     #[rust] items: ComponentMap<CheckBoxId, CheckBoxRef>
+}
+
+impl LiveHook for TodoList {
+    fn before_live_design(cx:&mut Cx){
+        register_widget!(cx, TodoList)
+    }
 }
 
 impl Widget for TodoList {  
