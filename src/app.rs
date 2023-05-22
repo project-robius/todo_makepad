@@ -146,7 +146,7 @@ live_design!{
 // main application struct (`App`) and the global context object (`Cx`), and setting up event
 // handling. On desktop, this means creating and running our own event loop. On web, this means
 // creating an event handler function that the browser event loop can call into.
-app_main!(App);
+//app_main!(App);
 
 #[derive(Clone, Debug, Default, Eq, Hash, Copy, PartialEq, FromLiveId)]
 pub struct CheckBoxId(pub LiveId);
