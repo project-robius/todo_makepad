@@ -1,4 +1,5 @@
 use makepad_widgets::*;
+use serde_json::{Result, Value};
 
 // The live_design macro generates a function that registers a DSL code block with the global
 // context object (`Cx`).
@@ -160,7 +161,21 @@ pub struct App {
     // A frame widget. Used to contain our button and label.
     #[live] ui: WidgetRef,
 
-    #[rust] todos: Vec<String>
+    #[rust] todos: Vec<String>,
+
+    #[rust] todo_load_request_id: Option<LiveId>,
+}
+
+impl App {
+    fn load_todos(cx: &mut Cx, ui:WidgetRef) -> LiveId {
+        let completion_url = "http://localhost:4000/api/todos/".to_string();
+        let mut request = HttpRequest::new(completion_url, "GET".to_string());
+        request.set_header("Content-Type".to_string(), "application/json".to_string());
+
+        let id = request.id;
+        cx.http_request(request);
+        id
+    }
 }
 
 impl LiveHook for App {
@@ -177,6 +192,34 @@ impl AppMain for App{
         if let Event::Draw(event) = event {
             // This is a draw event, so create a draw context and use that to draw our application.
             return self.ui.draw_widget_all(&mut Cx2d::new(cx, event));
+        }
+
+        // Retrieve todos only when the app is loaded
+        if self.todo_load_request_id.is_none() {
+            self.todo_load_request_id = Some(Self::load_todos(cx, self.ui.clone()));
+        }
+
+        if let Event::HttpResponse(event) = event {  
+            if let Some(todo_load_request_id) = self.todo_load_request_id {
+                // Check the request id to make sure we are handling the correct response
+                // TODO event.response.id maybe must be renamed to event.response.requets_id
+                if event.response.id != todo_load_request_id {
+                    let todos_response = event.response.get_body().unwrap();
+                    let todos: Value = serde_json::from_str(&todos_response).unwrap();
+
+                    // Only take the first 3 todos for now
+                    let labels: Vec<String> = todos["data"]
+                        .as_array()
+                        .unwrap()
+                        .iter().take(3).map({ |todo|
+                            todo["text"].as_str().unwrap().to_string()
+                        }).collect();
+
+                    self.todos = labels.to_vec();
+
+                    self.ui.redraw(cx);
+                }
+            }
         }
 
         let mut new_todo:Option<String> = None;
