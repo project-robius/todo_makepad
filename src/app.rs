@@ -1,6 +1,4 @@
 use makepad_widgets::*;
-use makepad_widgets::text_input::*;
-
 
 // The live_design macro generates a function that registers a DSL code block with the global
 // context object (`Cx`).
