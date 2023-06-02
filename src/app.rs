@@ -1,5 +1,5 @@
 use makepad_widgets::*;
-use serde_json::{json, Result, Value};
+use serde_json::Value;
 use makepad_platform::network::*;
 
 // The live_design macro generates a function that registers a DSL code block with the global
@@ -162,26 +162,28 @@ pub struct App {
     // A frame widget. Used to contain our button and label.
     #[live] ui: WidgetRef,
 
-    #[rust] todos: Vec<String>,
+    #[rust] todos: Vec<TodoItem>,
+}
 
-    #[rust] todo_load_request_id: Option<LiveId>,
+#[derive(Clone)]
+pub struct TodoItem {
+    text: String,
+    done: bool,
 }
 
 impl App {
-    fn load_todos(cx: &mut Cx) -> LiveId {
+    fn fetch_todos(cx: &mut Cx) {
         let server_url = "https://cholee-todo-app.fly.dev/api/todos/".to_string();
-        let id = LiveId::unique();
-        let mut request = HttpRequest::new(id, server_url, Method::GET);
+        let request_identifier = LiveId::from_str("InitialTodoFetch").unwrap();
+        let mut request = HttpRequest::new(request_identifier, server_url, Method::GET);
         request.set_header("Content-Type".to_string(), "application/json".to_string());
         cx.http_request(request);
-
-        id
     }
 
-    fn save_todo(cx: &mut Cx, todo_label: &String) -> LiveId {
+    fn save_todo(cx: &mut Cx, todo_label: &String) {
         let server_url = "https://cholee-todo-app.fly.dev/api/todos/".to_string();
-        let id = LiveId::unique();
-        let mut request = HttpRequest::new(id, server_url, Method::POST);
+        let request_identifier = LiveId::from_str("SaveTodo").unwrap();
+        let mut request = HttpRequest::new(request_identifier, server_url, Method::POST);
         request.set_header("Content-Type".to_string(), "application/json".to_string());
 
         let body = format!(r#"{{
@@ -193,14 +195,16 @@ impl App {
 
         request.set_string_body(body);
         cx.http_request(request);
-
-        id
     }
 }
 
 impl LiveHook for App {
     fn before_live_design(cx: &mut Cx) {
         crate::makepad_widgets::live_design(cx);
+    }
+
+    fn after_new_from_doc(&mut self, cx: &mut Cx) {
+        Self::fetch_todos(cx);
     }
 }
 
@@ -214,37 +218,40 @@ impl AppMain for App{
             return self.ui.draw_widget_all(&mut Cx2d::new(cx, event));
         }
 
-        // Retrieve todos only when the app is loaded
-        if self.todo_load_request_id.is_none() {
-            self.todo_load_request_id = Some(Self::load_todos(cx));
-        }
-
         if let Event::HttpResponse(event) = event {  
-            log!("Error loading todos: {:?}", event.response.status_code);
-            if let Some(todo_load_request_id) = self.todo_load_request_id {
-                // Check the request id to make sure we are handling the correct response
-                // TODO event.response.id maybe must be renamed to event.response.requets_id
-                if event.response.id != todo_load_request_id {
-                    if event.response.status_code != 200 {
-                        log!("Error loading todos: {:?}", event.response);
-                    } else {
-                        let todos_response = event.response.get_string_body().unwrap();
-                        let todos: Value = serde_json::from_str(&todos_response).unwrap();
+            event.response.id.as_string(|id: Option<&str>| {
+                match id {
+                    Some("InitialTodoFetch") => {
+                        if event.response.status_code == 200 {
+                            let todos_response = event.response.get_string_body().unwrap();
+                            let todos: Value = serde_json::from_str(&todos_response).unwrap();
 
-                        // Only take the first 3 todos for now
-                        let labels: Vec<String> = todos["data"]
-                            .as_array()
-                            .unwrap()
-                            .iter().take(3).map({ |todo|
-                                todo["text"].as_str().unwrap().to_string()
-                            }).collect();
+                            // Only take the first 5 todos for now
+                            let todo_items: Vec<TodoItem> = todos["data"]
+                                .as_array()
+                                .unwrap()
+                                .iter().take(5).map({ |todo|
+                                    TodoItem {
+                                        text: todo["text"].as_str().unwrap().to_string(),
+                                        done: todo["done"].as_bool().unwrap()
+                                    }
+                                }).collect();
 
-                        self.todos = labels.to_vec();
+                            self.todos = todo_items.to_vec();
 
-                        self.ui.redraw(cx);
+                            self.ui.redraw(cx);
+                        } else {
+                            log!("Error loading todos: {:?}", event.response);
+                        }
+                    },
+                    Some("SaveTodo") => {
+                        if event.response.status_code != 200 {
+                            log!("Error saving todo: {:?}", event.response);
+                        }
                     }
+                    _ => (),
                 }
-            }
+            })
         }
 
         let mut new_todo:Option<String> = None;
@@ -268,7 +275,7 @@ impl AppMain for App{
             Self::save_todo(cx, &new_todo_value);
 
             // Add the new todo to the locally-stored list
-            self.todos.push(new_todo_value);
+            self.todos.push(TodoItem{text: new_todo_value, done: false});
         }
 
         if let Some(mut todo_list) = self.ui.get_widget(id!(todo_list)).borrow_mut::<TodoList>() {
@@ -291,7 +298,7 @@ pub struct TodoList {
 
     // The "rust" attribute is used to indicate there is no field with those names in the
     // "live design" definitions. Those fields are used in our own Rust code.
-    #[rust] todos: Vec<String>,
+    #[rust] todos: Vec<TodoItem>,
     #[rust] items: ComponentMap<CheckBoxId, CheckBoxRef>
 }
 
@@ -357,7 +364,7 @@ impl TodoList {
                 CheckBoxRef::new_from_ptr(cx, self.checkbox)
             });
             
-            current_checkbox.set_label_text(value);
+            current_checkbox.set_label_text(&value.text);
             let _ = current_checkbox.draw_walk_widget(cx, walk);
         }
 
@@ -365,7 +372,7 @@ impl TodoList {
         self.items.retain_visible();
     }
 
-    pub fn set_todos(&mut self, todos: Vec<String>) {
+    pub fn set_todos(&mut self, todos: Vec<TodoItem>) {
         self.todos = todos
     }
 }
