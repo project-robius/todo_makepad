@@ -196,6 +196,25 @@ impl App {
         request.set_string_body(body);
         cx.http_request(request);
     }
+
+    fn update_todo(cx: &mut Cx, todo_id: u64, todo_done: bool) {
+        let server_url = format!(
+            "https://cholee-todo-app.fly.dev/api/todos/{}",
+            todo_id
+        );
+        let request_identifier = LiveId::from_str("UpdateTodo").unwrap();
+        let mut request = HttpRequest::new(request_identifier, server_url, Method::PUT);
+        request.set_header("Content-Type".to_string(), "application/json".to_string());
+
+        let body = format!(r#"{{
+            "todo": {{
+                "done": {}
+            }}
+        }}"#, todo_done);
+
+        request.set_string_body(body);
+        cx.http_request(request);
+    }
 }
 
 impl LiveHook for App {
@@ -261,7 +280,28 @@ impl AppMain for App{
                         } else {
                             log!("Error saving todo: {:?}", event.response);
                         }
-                    }
+                    },
+                    Some("UpdateTodo") => {
+                        if event.response.status_code == 200 {
+                            let todo_response = event.response.get_string_body().unwrap();
+                            let todo: Value = serde_json::from_str(&todo_response).unwrap();
+
+                            let updated_todo = TodoItem {
+                                id: todo["data"]["id"].as_u64().unwrap() as u64,
+                                text: todo["data"]["text"].as_str().unwrap().to_string(),
+                                done: todo["data"]["done"].as_bool().unwrap()
+                            };
+
+                            if let Some(todo_index) = self.todos.iter().position(|todo| todo.id == updated_todo.id) {
+                                self.todos[todo_index] = updated_todo;
+                                log!("Updated todo: {:?}", self.todos[todo_index]);
+
+                                self.ui.redraw(cx);
+                            }
+                        } else {
+                            log!("Error updating todo: {:?}", event.response);
+                        }
+                    },
                     _ => (),
                 }
             })
@@ -278,11 +318,10 @@ impl AppMain for App{
                 let todo_item_id = widget_action.widget_uid.0;
                 if let Some(updated_todo_item) = self.todos.iter_mut().find(|todo| todo.id == todo_item_id) {
                     updated_todo_item.done = value;
-                }
 
-                log!("is it done? {:?}", value);
-                log!("todo_item_id {:?}", todo_item_id);
-                log!("Updated todos {:?}", self.todos);
+                    // Save the updated todo to the server
+                    Self::update_todo(cx, todo_item_id, value);
+                }
             }
         }
 
@@ -391,6 +430,7 @@ impl TodoList {
             log!("value.id {:?} widget_id.0 {:?}", value.id, widget_id.0);
             
             current_checkbox.set_label_text(&value.text);
+            current_checkbox.set_selected(cx, value.done);
             let _ = current_checkbox.draw_walk_widget(cx, walk);
         }
 
