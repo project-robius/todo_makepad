@@ -161,12 +161,12 @@ pub struct App {
     // A chromeless window for our application. Used to contain our frame widget.
     // A frame widget. Used to contain our button and label.
     #[live] ui: WidgetRef,
-
     #[rust] todos: Vec<TodoItem>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TodoItem {
+    id: u64,
     text: String,
     done: bool,
 }
@@ -232,6 +232,7 @@ impl AppMain for App{
                                 .unwrap()
                                 .iter().take(5).map({ |todo|
                                     TodoItem {
+                                        id: todo["id"].as_u64().unwrap() as u64,
                                         text: todo["text"].as_str().unwrap().to_string(),
                                         done: todo["done"].as_bool().unwrap()
                                     }
@@ -245,7 +246,19 @@ impl AppMain for App{
                         }
                     },
                     Some("SaveTodo") => {
-                        if event.response.status_code != 200 {
+                        if event.response.status_code == 200 {
+                            let todo_response = event.response.get_string_body().unwrap();
+                            let todo: Value = serde_json::from_str(&todo_response).unwrap();
+
+                            let new_todo = TodoItem {
+                                id: todo["todo"]["id"].as_u64().unwrap() as u64,
+                                text: todo["todo"]["text"].as_str().unwrap().to_string(),
+                                done: todo["todo"]["done"].as_bool().unwrap()
+                            };
+
+                            self.todos.push(new_todo);
+                            self.ui.redraw(cx);
+                        } else {
                             log!("Error saving todo: {:?}", event.response);
                         }
                     }
@@ -261,6 +274,15 @@ impl AppMain for App{
                     new_todo = Some(value);
                     break
                 }
+            } else if let CheckBoxAction::Change(value) = widget_action.action::<CheckBoxAction>() {
+                let todo_item_id = widget_action.widget_uid.0;
+                if let Some(updated_todo_item) = self.todos.iter_mut().find(|todo| todo.id == todo_item_id) {
+                    updated_todo_item.done = value;
+                }
+
+                log!("is it done? {:?}", value);
+                log!("todo_item_id {:?}", todo_item_id);
+                log!("Updated todos {:?}", self.todos);
             }
         }
 
@@ -274,8 +296,8 @@ impl AppMain for App{
             // Save the new todo to the server
             Self::save_todo(cx, &new_todo_value);
 
-            // Add the new todo to the locally-stored list
-            self.todos.push(TodoItem{text: new_todo_value, done: false});
+            // TODO can we display it before waiting for the server (but we would need to generate an id beforehands)
+            //self.todos.push(TodoItem{id: ???, text: new_todo_value, done: false});
         }
 
         if let Some(mut todo_list) = self.ui.get_widget(id!(todo_list)).borrow_mut::<TodoList>() {
@@ -343,8 +365,10 @@ impl TodoList {
         event: &Event,
         dispatch_action: &mut dyn FnMut(&mut Cx, WidgetActionItem),
     ) {
-        for (_id, item) in self.items.iter_mut() {
-            let item_uid = item.widget_uid();
+        for (id, item) in self.items.iter_mut() {
+            // This id is actually the item id set by the server.
+            let item_uid = WidgetUid(id.0.0);
+
             if let Some(mut inner) = item.borrow_mut(){
                 inner.handle_event_with(cx, event, &mut | cx_imm, action | {
                     dispatch_action(cx_imm, WidgetActionItem::new(action.into(), item_uid));
@@ -358,11 +382,13 @@ impl TodoList {
         // Otherwise, it is ignored.
         cx.begin_turtle(walk, self.layout);
 
-        for (i, value) in self.todos.iter().enumerate() {
-            let item_id = LiveId(i as u64).into();
-            let current_checkbox = self.items.get_or_insert(cx, item_id, | cx | {
+        for (_id, value) in self.todos.iter().enumerate() {
+            let widget_id = LiveId(value.id).into();
+            let current_checkbox = self.items.get_or_insert(cx, widget_id, | cx | {
                 CheckBoxRef::new_from_ptr(cx, self.checkbox)
             });
+
+            log!("value.id {:?} widget_id.0 {:?}", value.id, widget_id.0);
             
             current_checkbox.set_label_text(&value.text);
             let _ = current_checkbox.draw_walk_widget(cx, walk);
