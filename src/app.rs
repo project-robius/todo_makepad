@@ -1,5 +1,6 @@
 use makepad_widgets::*;
-use serde_json::{Result, Value};
+use serde_json::{json, Result, Value};
+use makepad_platform::network::*;
 
 // The live_design macro generates a function that registers a DSL code block with the global
 // context object (`Cx`).
@@ -167,13 +168,32 @@ pub struct App {
 }
 
 impl App {
-    fn load_todos(cx: &mut Cx, ui:WidgetRef) -> LiveId {
-        let completion_url = "http://localhost:4000/api/todos/".to_string();
-        let mut request = HttpRequest::new(completion_url, "GET".to_string());
+    fn load_todos(cx: &mut Cx) -> LiveId {
+        let server_url = "https://cholee-todo-app.fly.dev/api/todos/".to_string();
+        let id = LiveId::unique();
+        let mut request = HttpRequest::new(id, server_url, Method::GET);
+        request.set_header("Content-Type".to_string(), "application/json".to_string());
+        cx.http_request(request);
+
+        id
+    }
+
+    fn save_todo(cx: &mut Cx, todo_label: &String) -> LiveId {
+        let server_url = "https://cholee-todo-app.fly.dev/api/todos/".to_string();
+        let id = LiveId::unique();
+        let mut request = HttpRequest::new(id, server_url, Method::POST);
         request.set_header("Content-Type".to_string(), "application/json".to_string());
 
-        let id = request.id;
+        let body = format!(r#"{{
+            "todo": {{
+                "text": "{}",
+                "done": false
+            }}
+        }}"#, todo_label);
+
+        request.set_string_body(body);
         cx.http_request(request);
+
         id
     }
 }
@@ -196,28 +216,33 @@ impl AppMain for App{
 
         // Retrieve todos only when the app is loaded
         if self.todo_load_request_id.is_none() {
-            self.todo_load_request_id = Some(Self::load_todos(cx, self.ui.clone()));
+            self.todo_load_request_id = Some(Self::load_todos(cx));
         }
 
         if let Event::HttpResponse(event) = event {  
+            log!("Error loading todos: {:?}", event.response.status_code);
             if let Some(todo_load_request_id) = self.todo_load_request_id {
                 // Check the request id to make sure we are handling the correct response
                 // TODO event.response.id maybe must be renamed to event.response.requets_id
                 if event.response.id != todo_load_request_id {
-                    let todos_response = event.response.get_body().unwrap();
-                    let todos: Value = serde_json::from_str(&todos_response).unwrap();
+                    if event.response.status_code != 200 {
+                        log!("Error loading todos: {:?}", event.response);
+                    } else {
+                        let todos_response = event.response.get_string_body().unwrap();
+                        let todos: Value = serde_json::from_str(&todos_response).unwrap();
 
-                    // Only take the first 3 todos for now
-                    let labels: Vec<String> = todos["data"]
-                        .as_array()
-                        .unwrap()
-                        .iter().take(3).map({ |todo|
-                            todo["text"].as_str().unwrap().to_string()
-                        }).collect();
+                        // Only take the first 3 todos for now
+                        let labels: Vec<String> = todos["data"]
+                            .as_array()
+                            .unwrap()
+                            .iter().take(3).map({ |todo|
+                                todo["text"].as_str().unwrap().to_string()
+                            }).collect();
 
-                    self.todos = labels.to_vec();
+                        self.todos = labels.to_vec();
 
-                    self.ui.redraw(cx);
+                        self.ui.redraw(cx);
+                    }
                 }
             }
         }
@@ -233,13 +258,17 @@ impl AppMain for App{
         }
 
         if let Some(new_todo_value) = new_todo {
-            self.todos.push(new_todo_value);
-
             let text_input = self.ui.get_text_input(id!(input));
             text_input.set_text("");
 
             // This redraw is needed to have this element and the todo list updated upon pressing Enter
             text_input.redraw(cx); 
+
+            // Save the new todo to the server
+            Self::save_todo(cx, &new_todo_value);
+
+            // Add the new todo to the locally-stored list
+            self.todos.push(new_todo_value);
         }
 
         if let Some(mut todo_list) = self.ui.get_widget(id!(todo_list)).borrow_mut::<TodoList>() {
