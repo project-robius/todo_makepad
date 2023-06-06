@@ -265,14 +265,14 @@ impl AppMain for App{
                         }
                     },
                     Some("SaveTodo") => {
-                        if event.response.status_code == 200 {
+                        if event.response.status_code == 201 {
                             let todo_response = event.response.get_string_body().unwrap();
                             let todo: Value = serde_json::from_str(&todo_response).unwrap();
 
                             let new_todo = TodoItem {
-                                id: todo["todo"]["id"].as_u64().unwrap() as u64,
-                                text: todo["todo"]["text"].as_str().unwrap().to_string(),
-                                done: todo["todo"]["done"].as_bool().unwrap()
+                                id: todo["data"]["id"].as_u64().unwrap() as u64,
+                                text: todo["data"]["text"].as_str().unwrap().to_string(),
+                                done: todo["data"]["done"].as_bool().unwrap()
                             };
 
                             self.todos.push(new_todo);
@@ -426,8 +426,6 @@ impl TodoList {
             let current_checkbox = self.items.get_or_insert(cx, widget_id, | cx | {
                 CheckBoxRef::new_from_ptr(cx, self.checkbox)
             });
-
-            log!("value.id {:?} widget_id.0 {:?}", value.id, widget_id.0);
             
             current_checkbox.set_label_text(&value.text);
             current_checkbox.set_selected(cx, value.done);
