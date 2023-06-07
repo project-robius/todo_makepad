@@ -28,10 +28,10 @@ live_design!{
         // `ui` field on the Rust struct `App`, the latter will be initialized from the DSL object
         // here below.
         ui: <DesktopWindow> {
-            window: {inner_size: vec2(1280, 1000), dpi_override: 2},
             pass: {clear_color: #2A}
             block_signal_event: true;
-            <AppMobile> {}
+            <AppDesktop> {}
+            // <AppMobile> {} <- Switch to this for Android build. It's manual for now.
         }
     }
 }
@@ -139,7 +139,7 @@ impl AppMain for App{
                             let todo_items: Vec<TodoItem> = todos["data"]
                                 .as_array()
                                 .unwrap()
-                                .iter().take(5).map({ |todo|
+                                .iter().take(10).map({ |todo|
                                     TodoItem {
                                         id: todo["id"].as_u64().unwrap() as u64,
                                         text: todo["text"].as_str().unwrap().to_string(),

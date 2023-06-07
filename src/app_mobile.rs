@@ -10,11 +10,11 @@ live_design!{
     import makepad_widgets::text_input::TextInput;
 
     TITLE_TEXT = {
-        font_size: (48),
+        font_size: (20),
         font: {path: dep("crate://self/resources/IBMPlexSans-SemiBold.ttf")}
     }
     REGULAR_TEXT = {
-        font_size: (30),
+        font_size: (12),
         font: {path: dep("crate://self/resources/IBMPlexSans-Text.ttf")}
     }
 
@@ -26,7 +26,9 @@ live_design!{
         walk: { width: Fill, height: Fit },
 
         prompt = <Label> {
-            walk: { width: 500, height: Fit },
+            // TODO check why it fails!
+            //walk: { width: Fill, height: Fit },
+            walk: { width: 350, height: Fit },
             draw_label: {
                 color: #x223322,
                 text_style: <REGULAR_TEXT>{},
@@ -41,7 +43,7 @@ live_design!{
                 color: #x223322
             }
             draw_label: {
-                text_style:<REGULAR_TEXT>{font_size: (22)},
+                text_style:<REGULAR_TEXT>{},
                 color: #x219EBC
             }
             text: "Write here your next task...",
@@ -57,7 +59,7 @@ live_design!{
                 x: 0,
                 y: 0
             },
-            padding: {left: 50, top: 150, right: 50, bottom: 50},
+            padding: {left: 30, top: 100},
         },
         // The `walk` property determines how the frame widget itself is laid out. In this
         // case, the frame widget takes up the entire window.

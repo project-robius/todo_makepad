@@ -5,7 +5,7 @@ live_design!{
     import makepad_widgets::check_box::CheckBox;
 
     REGULAR_TEXT = {
-        font_size: (26),
+        font_size: (12),
         font: {path: dep("crate://self/resources/IBMPlexSans-Text.ttf")}
     }
 
@@ -13,7 +13,6 @@ live_design!{
         layout: {
             flow: Down,
             spacing: 10,
-            padding: {left: 100}
         },
         walk: {width: Fill, height: Fit},
         checkbox: <CheckBox> {
@@ -21,7 +20,7 @@ live_design!{
                 instance border_width: 1.0
                 instance border_color: #223322
                 instance border_color2: #229999
-                size: 20.0,
+                size: 10.0,
             }
 
             draw_label: {
@@ -35,8 +34,7 @@ live_design!{
                 }
             }
 
-            walk: {margin: {left: 50.0}, width: 800},
-            label_walk: {margin: {left: 50.0}, width: 800}
+            label_walk: {margin: {left: 30.0}}
         }
     }
 }

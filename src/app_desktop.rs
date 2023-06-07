@@ -50,17 +50,18 @@ live_design!{
         show_bg: true,
         layout: {
             flow: Down,
-            spacing: 100,
+            spacing: 60,
             align: {
                 x: 0.5,
                 y: 0.2
-            }
+            },
+            padding: {top: 20},
         },
         // The `walk` property determines how the frame widget itself is laid out. In this
         // case, the frame widget takes up the entire window.
         walk: {
             width: Fill,
-            height: Fill
+            height: Fill,
         },
         draw_bg: {
             fn pixel(self) -> vec4 {
@@ -83,6 +84,8 @@ live_design!{
             walk: {width: Fit, height: Fit}
         }
 
-        todo_list = <TodoList> {}
+        todo_list = <TodoList> {
+            walk: {width: 800}
+        }
     }
 }
