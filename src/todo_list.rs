@@ -5,7 +5,7 @@ live_design!{
     import makepad_widgets::check_box::CheckBox;
 
     REGULAR_TEXT = {
-        font_size: (20),
+        font_size: (26),
         font: {path: dep("crate://self/resources/IBMPlexSans-Text.ttf")}
     }
 

@@ -28,10 +28,10 @@ live_design!{
         // `ui` field on the Rust struct `App`, the latter will be initialized from the DSL object
         // here below.
         ui: <DesktopWindow> {
-            window: {inner_size: vec2(1280, 1000), dpi_override:2},
+            window: {inner_size: vec2(1280, 1000), dpi_override: 2},
             pass: {clear_color: #2A}
             block_signal_event: true;
-            <AppDesktop> {}
+            <AppMobile> {}
         }
     }
 }
