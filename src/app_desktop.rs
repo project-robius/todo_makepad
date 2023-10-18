@@ -2,12 +2,9 @@ use makepad_widgets::*;
 
 live_design!{
     import todo_makepad::todo_list::TodoList;
+    import makepad_widgets::base::*;
+    import makepad_widgets::theme_desktop_dark::*;
     import makepad_draw::shader::std::*;
-    import makepad_widgets::desktop_window::DesktopWindow;
-    import makepad_widgets::frame::Frame;
-    import makepad_widgets::frame::Image;
-    import makepad_widgets::label::Label;
-    import makepad_widgets::text_input::TextInput;
 
     TITLE_TEXT = {
         font_size: (40),
@@ -18,11 +15,9 @@ live_design!{
         font: {path: dep("crate://self/resources/IBMPlexSans-Text.ttf")}
     }
 
-    TodoPrompt = <Frame> {
-        layout: {
-            flow: Down,
-            spacing: 10,
-        },
+    TodoPrompt = <View> {
+        flow: Down,
+        spacing: 10,
 
         prompt = <Label> {
             draw_label: {
@@ -34,7 +29,8 @@ live_design!{
 
         input = <TextInput> {
             instance border_width: 1.0,
-            walk: {width: 800, height: 40},
+            width: 800,
+            height: 40,
             draw_bg: {
                 color: #223322
             }
@@ -46,23 +42,17 @@ live_design!{
         }
     }
 
-    AppDesktop = <Frame> {
+    AppDesktop = <View> {
         show_bg: true,
-        layout: {
-            flow: Down,
-            spacing: 60,
-            align: {
-                x: 0.5,
-                y: 0.2
-            },
-            padding: {top: 20},
+        flow: Down,
+        spacing: 60,
+        align: {
+            x: 0.5,
+            y: 0.2
         },
-        // The `walk` property determines how the frame widget itself is laid out. In this
-        // case, the frame widget takes up the entire window.
-        walk: {
-            width: Fill,
-            height: Fill,
-        },
+        padding: {top: 20},
+        width: Fill,
+        height: Fill,
         draw_bg: {
             fn pixel(self) -> vec4 {
                 // Gradient color effect starting from a yellow tone
@@ -81,11 +71,12 @@ live_design!{
         }
 
         todo_prompt = <TodoPrompt> {
-            walk: {width: Fit, height: Fit}
+            width: Fit,
+            height: Fit
         }
 
         todo_list = <TodoList> {
-            walk: {width: 800}
+            width: 800
         }
     }
 }
