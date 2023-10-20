@@ -3,11 +3,8 @@ use makepad_widgets::*;
 live_design!{
     import todo_makepad::todo_list::TodoList;
     import makepad_draw::shader::std::*;
-    import makepad_widgets::desktop_window::DesktopWindow;
-    import makepad_widgets::frame::Frame;
-    import makepad_widgets::frame::Image;
-    import makepad_widgets::label::Label;
-    import makepad_widgets::text_input::TextInput;
+    import makepad_widgets::base::*;
+    import makepad_widgets::theme_desktop_dark::*;
 
     TITLE_TEXT = {
         font_size: (20),
@@ -18,31 +15,31 @@ live_design!{
         font: {path: dep("crate://self/resources/IBMPlexSans-Text.ttf")}
     }
 
-    TodoPrompt = <Frame> {
-        layout: {
-            flow: Down,
-            spacing: 10,
-        },
-        walk: { width: Fill, height: Fit },
+    TodoPrompt = <View> {
+        flow: Down,
+        spacing: 10,
+        width: Fill,
+        height: Fit,
 
         prompt = <Label> {
-            // TODO check why it fails!
-            //walk: { width: Fill, height: Fit },
-            walk: { width: 350, height: Fit },
-            draw_label: {
-                color: #x223322,
+            // // width: Fill,
+            width: 350, 
+            height: Fit,
+            draw_text: {
+                color: #223322,
                 text_style: <REGULAR_TEXT>{},
             },
-            label: "What is the next to add?"
+            text: "What is the next to add?"
         }
 
         input = <TextInput> {
             instance border_width: 1.0,
-            walk: { width: Fill, height: Fit },
+            width: Fill,
+            height: Fit,
             draw_bg: {
-                color: #x223322
+                color: #223322
             }
-            draw_label: {
+            draw_text: {
                 text_style:<REGULAR_TEXT>{},
                 color: #x219EBC
             }
@@ -50,23 +47,17 @@ live_design!{
         }
     }
 
-    AppMobile = <Frame> {
+    AppMobile = <View> {
         show_bg: true,
-        layout: {
-            flow: Down,
-            spacing: 50,
-            align: {
-                x: 0,
-                y: 0
-            },
-            padding: {left: 30, top: 100},
+        flow: Down,
+        spacing: 50,
+        align: {
+            x: 0.5,
+            y: 0.2
         },
-        // The `walk` property determines how the frame widget itself is laid out. In this
-        // case, the frame widget takes up the entire window.
-        walk: {
-            width: Fill,
-            height: Fill
-        },
+        padding: {left: 30, top: 100},
+        width: Fill,
+        height: Fill
         draw_bg: {
             fn pixel(self) -> vec4 {
                 // Gradient color effect starting from a yellow tone
@@ -77,15 +68,16 @@ live_design!{
         }
         // A label to display the counter.
         title = <Label> {
-            draw_label: {
-                color: #x023047,
+            draw_text: {
+                color: #0,
                 text_style: <TITLE_TEXT>{},
             },
-            label: "My TODO list Mobile"
+            text: "My TODO list Mobile"
         }
 
         todo_prompt = <TodoPrompt> {
-            walk: {width: Fit, height: Fit}
+            width: Fit,
+            height: Fit
         }
 
         todo_list = <TodoList> {}

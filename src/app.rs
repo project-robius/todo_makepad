@@ -1,6 +1,5 @@
 use makepad_widgets::*;
 use serde_json::Value;
-use makepad_platform::network::*;
 
 use crate::todo_list::TodoList;
 use crate::todo_item::TodoItem;
@@ -14,7 +13,8 @@ use crate::todo_item::TodoItem;
 // as a code editor) can notify the Makepad runtime that a DSL code block has been changed, allowing
 // the runtime to automatically update the affected widgets.
 live_design!{
-    import makepad_widgets::desktop_window::DesktopWindow
+    import makepad_widgets::base::*;
+    import makepad_widgets::theme_desktop_dark::*;
     import todo_makepad::app_desktop::AppDesktop
     import todo_makepad::app_mobile::AppMobile 
 
@@ -27,11 +27,11 @@ live_design!{
         // for other widgets. Since the `ui` property on the DSL object `App` corresponds with the
         // `ui` field on the Rust struct `App`, the latter will be initialized from the DSL object
         // here below.
-        ui: <DesktopWindow> {
+        ui: <Window> {
             pass: {clear_color: #2A}
             block_signal_event: true;
-            <AppDesktop> {}
-            // <AppMobile> {} <- Switch to this for Android build. It's manual for now.
+            body = { <AppDesktop> {} }
+            // body = { <AppMobile> {} } // Switch to this for Android build. It's manual for now.
         }
     }
 }
@@ -61,16 +61,16 @@ pub struct App {
 impl App {
     fn fetch_todos(cx: &mut Cx) {
         let server_url = "https://cholee-todo-app.fly.dev/api/todos/".to_string();
-        let request_identifier = LiveId::from_str("InitialTodoFetch").unwrap();
-        let mut request = HttpRequest::new(request_identifier, server_url, Method::GET);
+        let request_identifier = live_id!(InitialTodoFetch);
+        let mut request = HttpRequest::new(server_url, HttpMethod::GET);
         request.set_header("Content-Type".to_string(), "application/json".to_string());
-        cx.http_request(request);
+        cx.http_request(request_identifier, request);
     }
 
     fn save_todo(cx: &mut Cx, todo_label: &String) {
         let server_url = "https://cholee-todo-app.fly.dev/api/todos/".to_string();
-        let request_identifier = LiveId::from_str("SaveTodo").unwrap();
-        let mut request = HttpRequest::new(request_identifier, server_url, Method::POST);
+        let request_identifier = live_id!(SaveTodo);
+        let mut request = HttpRequest::new(server_url, HttpMethod::POST);
         request.set_header("Content-Type".to_string(), "application/json".to_string());
 
         let body = format!(r#"{{
@@ -81,7 +81,7 @@ impl App {
         }}"#, todo_label);
 
         request.set_string_body(body);
-        cx.http_request(request);
+        cx.http_request(request_identifier, request);
     }
 
     fn update_todo(cx: &mut Cx, todo_id: u64, todo_done: bool) {
@@ -89,8 +89,8 @@ impl App {
             "https://cholee-todo-app.fly.dev/api/todos/{}",
             todo_id
         );
-        let request_identifier = LiveId::from_str("UpdateTodo").unwrap();
-        let mut request = HttpRequest::new(request_identifier, server_url, Method::PUT);
+        let request_identifier = live_id!(UpdateTodo);
+        let mut request = HttpRequest::new(server_url, HttpMethod::PUT);
         request.set_header("Content-Type".to_string(), "application/json".to_string());
 
         let body = format!(r#"{{
@@ -100,7 +100,7 @@ impl App {
         }}"#, todo_done);
 
         request.set_string_body(body);
-        cx.http_request(request);
+        cx.http_request(request_identifier, request);
     }
 }
 
@@ -126,13 +126,13 @@ impl AppMain for App{
             // This is a draw event, so create a draw context and use that to draw our application.
             return self.ui.draw_widget_all(&mut Cx2d::new(cx, event));
         }
-
-        if let Event::HttpResponse(event) = event {  
-            event.response.id.as_string(|id: Option<&str>| {
-                match id {
-                    Some("InitialTodoFetch") => {
-                        if event.response.status_code == 200 {
-                            let todos_response = event.response.get_string_body().unwrap();
+        for event in event.network_responses() {
+            match &event.response {
+                NetworkResponse::HttpResponse(response) => {
+                match event.request_id {
+                    live_id!(InitialTodoFetch) => {
+                        if response.status_code == 200 {
+                            let todos_response = response.get_string_body().unwrap();
                             let todos: Value = serde_json::from_str(&todos_response).unwrap();
 
                             // Only take the first 5 todos for now
@@ -151,12 +151,12 @@ impl AppMain for App{
 
                             self.ui.redraw(cx);
                         } else {
-                            log!("Error loading todos: {:?}", event.response);
+                            log!("Error loading todos: {:?}", response);
                         }
                     },
-                    Some("SaveTodo") => {
-                        if event.response.status_code == 201 {
-                            let todo_response = event.response.get_string_body().unwrap();
+                    live_id!(SaveTodo) => {
+                        if response.status_code == 201 {
+                            let todo_response = response.get_string_body().unwrap();
                             let todo: Value = serde_json::from_str(&todo_response).unwrap();
 
                             let new_todo = TodoItem {
@@ -168,12 +168,12 @@ impl AppMain for App{
                             self.todos.push(new_todo);
                             self.ui.redraw(cx);
                         } else {
-                            log!("Error saving todo: {:?}", event.response);
+                            log!("Error saving todo: {:?}", response);
                         }
                     },
-                    Some("UpdateTodo") => {
-                        if event.response.status_code == 200 {
-                            let todo_response = event.response.get_string_body().unwrap();
+                    live_id!(UpdateTodo) => {
+                        if response.status_code == 200 {
+                            let todo_response = response.get_string_body().unwrap();
                             let todo: Value = serde_json::from_str(&todo_response).unwrap();
 
                             let updated_todo = TodoItem {
@@ -189,12 +189,13 @@ impl AppMain for App{
                                 self.ui.redraw(cx);
                             }
                         } else {
-                            log!("Error updating todo: {:?}", event.response);
+                            log!("Error updating todo: {:?}", response);
                         }
                     },
                     _ => (),
-                }
-            })
+                }},
+                _ => (),
+            }
         }
 
         let mut new_todo:Option<String> = None;
@@ -216,7 +217,7 @@ impl AppMain for App{
         }
 
         if let Some(new_todo_value) = new_todo {
-            let text_input = self.ui.get_text_input(id!(input));
+            let text_input = self.ui.text_input(id!(input));
             text_input.set_text("");
 
             // This redraw is needed to have this element and the todo list updated upon pressing Enter
@@ -229,7 +230,7 @@ impl AppMain for App{
             //self.todos.push(TodoItem{id: ???, text: new_todo_value, done: false});
         }
 
-        if let Some(mut todo_list) = self.ui.get_widget(id!(todo_list)).borrow_mut::<TodoList>() {
+        if let Some(mut todo_list) = self.ui.widget(id!(todo_list)).borrow_mut::<TodoList>() {
             todo_list.set_todos(self.todos.clone());
         }
     }

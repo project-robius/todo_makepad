@@ -2,7 +2,8 @@ use makepad_widgets::*;
 use crate::todo_item::TodoItem;
 
 live_design!{
-    import makepad_widgets::check_box::CheckBox;
+    import makepad_widgets::base::*;
+    import makepad_widgets::theme_desktop_dark::*;
 
     REGULAR_TEXT = {
         font_size: (12),
@@ -10,11 +11,10 @@ live_design!{
     }
 
     TodoList = {{TodoList}} {
-        layout: {
-            flow: Down,
-            spacing: 10,
-        },
-        walk: {width: Fill, height: Fit},
+        flow: Down,
+        spacing: 10,
+        width: Fill,
+        height: Fit,
         checkbox: <CheckBox> {
             draw_check: {
                 instance border_width: 1.0
@@ -23,7 +23,7 @@ live_design!{
                 size: 10.0,
             }
 
-            draw_label: {
+            draw_text: {
                 text_style: <REGULAR_TEXT>{},
                 fn get_color(self) -> vec4 {
                     return mix(
@@ -46,8 +46,8 @@ pub struct CheckBoxId(pub LiveId);
 pub struct TodoList {
     // It is mandatory to list here all the fields that are part of the live design block.
     // You need to annotate them with `#[live]`
-    #[live] walk: Walk,
-    #[live] layout: Layout,
+    #[walk] walk: Walk,
+    #[layout] layout: Layout,
 
     // This is also refered in the live design block, but it is not meant to be rendered automatically.
     // This is like a template element, that is used to create concrete instances that are
@@ -78,8 +78,8 @@ impl Widget for TodoList {
         });
     }
 
-    fn get_walk(&self)->Walk{ self.walk }
-
+    fn walk(&mut self, _cx:&mut Cx) -> Walk {self.walk}
+ 
     fn redraw(&mut self, _cx:&mut Cx){
         // Not sure how I can implement this method if I don't have an Area
         // (which is what I see in many examples).
@@ -121,10 +121,10 @@ impl TodoList {
         for (_id, value) in self.todos.iter().enumerate() {
             let widget_id = LiveId(value.id).into();
             let current_checkbox = self.items.get_or_insert(cx, widget_id, | cx | {
-                CheckBoxRef::new_from_ptr(cx, self.checkbox)
+                let widget_ref = WidgetRef::new_from_ptr(cx, self.checkbox);
+                widget_ref.as_check_box()
             });
-
-            current_checkbox.set_label_text(&value.text);
+            current_checkbox.set_text(&value.text);
             current_checkbox.set_selected(cx, value.done);
             let _ = current_checkbox.draw_walk_widget(cx, walk);
         }
