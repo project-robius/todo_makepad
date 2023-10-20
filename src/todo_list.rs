@@ -2,7 +2,8 @@ use makepad_widgets::*;
 use crate::todo_item::TodoItem;
 
 live_design!{
-    import makepad_widgets::check_box::CheckBox;
+    import makepad_widgets::base::*;
+    import makepad_widgets::theme_desktop_dark::*;
 
     REGULAR_TEXT = {
         font_size: (12),
@@ -10,10 +11,8 @@ live_design!{
     }
 
     TodoList = {{TodoList}} {
-        layout: {
-            flow: Down,
-            spacing: 10,
-        },
+        flow: Down,
+        spacing: 10,
         width: Fill,
         height: Fit,
         checkbox: <CheckBox> {
@@ -24,7 +23,7 @@ live_design!{
                 size: 10.0,
             }
 
-            draw_label: {
+            draw_text: {
                 text_style: <REGULAR_TEXT>{},
                 fn get_color(self) -> vec4 {
                     return mix(
@@ -122,9 +121,9 @@ impl TodoList {
         for (_id, value) in self.todos.iter().enumerate() {
             let widget_id = LiveId(value.id).into();
             let current_checkbox = self.items.get_or_insert(cx, widget_id, | cx | {
-                CheckBoxRef::new_from_ptr(cx, self.checkbox)
+                let widget_ref = WidgetRef::new_from_ptr(cx, self.checkbox);
+                widget_ref.as_check_box()
             });
-
             current_checkbox.set_text(&value.text);
             current_checkbox.set_selected(cx, value.done);
             let _ = current_checkbox.draw_walk_widget(cx, walk);

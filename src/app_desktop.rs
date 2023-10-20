@@ -2,9 +2,9 @@ use makepad_widgets::*;
 
 live_design!{
     import todo_makepad::todo_list::TodoList;
+    import makepad_draw::shader::std::*;
     import makepad_widgets::base::*;
     import makepad_widgets::theme_desktop_dark::*;
-    import makepad_draw::shader::std::*;
 
     TITLE_TEXT = {
         font_size: (40),
@@ -20,11 +20,11 @@ live_design!{
         spacing: 10,
 
         prompt = <Label> {
-            draw_label: {
+            draw_text: {
                 color: #0,
                 text_style: <REGULAR_TEXT>{},
             },
-            label: "What is the next to add?"
+            text: "What is the next to add?"
         }
 
         input = <TextInput> {
@@ -34,7 +34,7 @@ live_design!{
             draw_bg: {
                 color: #223322
             }
-            draw_label: {
+            draw_text: {
                 text_style:<REGULAR_TEXT>{font_size: (16)},
                 color: #aaaaaa
             }
@@ -63,11 +63,11 @@ live_design!{
         }
         // A label to display the counter.
         title = <Label> {
-            draw_label: {
+            draw_text: {
                 color: #0,
                 text_style: <TITLE_TEXT>{},
             },
-            label: "My TODO list"
+            text: "My TODO list"
         }
 
         todo_prompt = <TodoPrompt> {

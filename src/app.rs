@@ -30,8 +30,8 @@ live_design!{
         ui: <Window> {
             pass: {clear_color: #2A}
             block_signal_event: true;
-            <AppDesktop> {}
-            // <AppMobile> {} // Switch to this for Android build. It's manual for now.
+            body = { <AppDesktop> {} }
+            // body = { <AppMobile> {} } // Switch to this for Android build. It's manual for now.
         }
     }
 }
@@ -193,7 +193,8 @@ impl AppMain for App{
                         }
                     },
                     _ => (),
-                }}
+                }},
+                _ => (),
             }
         }
 
