@@ -5,11 +5,6 @@ live_design!{
     import makepad_widgets::base::*;
     import makepad_widgets::theme_desktop_dark::*;
 
-    REGULAR_TEXT = {
-        font_size: (12),
-        font: {path: dep("crate://self/resources/IBMPlexSans-Text.ttf")}
-    }
-
     TodoList = {{TodoList}} {
         flow: Down,
         spacing: 10,
@@ -24,7 +19,7 @@ live_design!{
             }
 
             draw_text: {
-                text_style: <REGULAR_TEXT>{},
+                text_style: {font_size: (12)},
                 fn get_color(self) -> vec4 {
                     return mix(
                         (#333333),

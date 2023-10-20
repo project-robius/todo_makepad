@@ -10,10 +10,6 @@ live_design!{
         font_size: (40),
         font: {path: dep("crate://self/resources/IBMPlexSans-SemiBold.ttf")}
     }
-    REGULAR_TEXT = {
-        font_size: (20),
-        font: {path: dep("crate://self/resources/IBMPlexSans-Text.ttf")}
-    }
 
     TodoPrompt = <View> {
         flow: Down,
@@ -22,7 +18,7 @@ live_design!{
         prompt = <Label> {
             draw_text: {
                 color: #0,
-                text_style: <REGULAR_TEXT>{},
+                text_style: {font_size: (20)},
             },
             text: "What is the next to add?"
         }
@@ -35,7 +31,7 @@ live_design!{
                 color: #223322
             }
             draw_text: {
-                text_style:<REGULAR_TEXT>{font_size: (16)},
+                text_style: {font_size: (16)},
                 color: #aaaaaa
             }
             text: "Write here your next task...",
