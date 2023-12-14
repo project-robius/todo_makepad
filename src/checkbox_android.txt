@@ -1,0 +1,301 @@
+ /Users/jorgebejar/Projects/makepad/platform/src/os/linux/opengl.rs:408 - uniform float const_table[116];
+
+ uniform float draw_table[1];
+ float ds_draw_zbias = 0.0;
+
+ uniform float pass_table[50];
+ mat4 ds_camera_projection = mat4(0.0);
+ mat4 ds_camera_view = mat4(0.0);
+ mat4 ds_camera_inv = mat4(0.0);
+ float ds_dpi_factor = 0.0;
+ float ds_dpi_dilate = 0.0;
+
+ uniform float user_table[1];
+ float ds_size = 0.0;
+
+ uniform float view_table[16];
+ mat4 ds_view_transform = mat4(0.0);
+
+
+ attribute vec2 packed_geometry_0;
+
+ attribute vec4 packed_instance_0;
+ attribute vec4 packed_instance_1;
+ attribute vec4 packed_instance_2;
+ attribute vec4 packed_instance_3;
+ attribute vec4 packed_instance_4;
+ attribute vec3 packed_instance_5;
+
+ varying vec4 packed_varying_0;
+ varying vec3 packed_varying_1;
+
+ float ds_border_width=0.0;
+ vec4 ds_border_color=vec4(0.0);
+ vec4 ds_border_color2=vec4(0.0);
+ vec2 ds_rect_pos=vec2(0.0);
+ vec2 ds_rect_size=vec2(0.0);
+ vec4 ds_draw_clip=vec4(0.0);
+ float ds_draw_depth=0.0;
+ float ds_0=0.0;
+ float ds_check_type=0.0;
+ float ds_hover=0.0;
+ float ds_focus=0.0;
+ float ds_selected=0.0;
+ vec2 ds_geom_pos=vec2(0.0);
+ vec2 ds_pos=vec2(0.0);
+
+ vec4 fn_47_899_clip_and_transform_vertex(vec2 var_rect_pos_0, vec2 var_rect_size_0) {
+     vec2 var_clipped_0 = clamp(((ds_geom_pos * var_rect_size_0) + var_rect_pos_0), ds_draw_clip.xy, ds_draw_clip.zw);
+     (ds_pos = ((var_clipped_0 - var_rect_pos_0) / var_rect_size_0));
+     return (ds_camera_projection * (ds_camera_view * (ds_view_transform * vec4(var_clipped_0.x, var_clipped_0.y, (ds_draw_depth + ds_draw_zbias), const_table[0]))));
+ }
+
+ vec4 fn_47_901_vertex() {
+     return fn_47_899_clip_and_transform_vertex (ds_rect_pos, ds_rect_size);
+ }
+
+ void main() {
+     ds_draw_zbias = draw_table[0];
+
+     ds_camera_projection = mat4(pass_table[0], pass_table[1], pass_table[2], pass_table[3], pass_table[4], pass_table[5], pass_table[6], pass_table[7], pass_table[8], pass_table[9], pass_table[10], pass_table[11], pass_table[12], pass_table[13], pass_table[14], pass_table[15]);
+     ds_camera_view = mat4(pass_table[16], pass_table[17], pass_table[18], pass_table[19], pass_table[20], pass_table[21], pass_table[22], pass_table[23], pass_table[24], pass_table[25], pass_table[26], pass_table[27], pass_table[28], pass_table[29], pass_table[30], pass_table[31]);
+     ds_camera_inv = mat4(pass_table[32], pass_table[33], pass_table[34], pass_table[35], pass_table[36], pass_table[37], pass_table[38], pass_table[39], pass_table[40], pass_table[41], pass_table[42], pass_table[43], pass_table[44], pass_table[45], pass_table[46], pass_table[47]);
+     ds_dpi_factor = pass_table[48];
+     ds_dpi_dilate = pass_table[49];
+
+     ds_size = user_table[0];
+
+     ds_view_transform = mat4(view_table[0], view_table[1], view_table[2], view_table[3], view_table[4], view_table[5], view_table[6], view_table[7], view_table[8], view_table[9], view_table[10], view_table[11], view_table[12], view_table[13], view_table[14], view_table[15]);
+
+     ds_geom_pos.xy = packed_geometry_0.xy;
+     ds_border_width = packed_instance_0.x;
+     ds_border_color.xyz = packed_instance_0.yzw;
+     ds_border_color.w = packed_instance_1.x;
+     ds_border_color2.xyz = packed_instance_1.yzw;
+     ds_border_color2.w = packed_instance_2.x;
+     ds_rect_pos.xy = packed_instance_2.yz;
+     ds_rect_size.x = packed_instance_2.w;
+     ds_rect_size.y = packed_instance_3.x;
+     ds_draw_clip.xyz = packed_instance_3.yzw;
+     ds_draw_clip.w = packed_instance_4.x;
+     ds_draw_depth = packed_instance_4.y;
+     ds_0 = packed_instance_4.z;
+     ds_check_type = packed_instance_4.w;
+     ds_hover = packed_instance_5.x;
+     ds_focus = packed_instance_5.y;
+     ds_selected = packed_instance_5.z;
+
+     gl_Position = fn_47_901_vertex();
+
+     packed_varying_0.xy = ds_rect_size.xy;
+     packed_varying_0.z = ds_check_type;
+     packed_varying_0.w = ds_hover;
+     packed_varying_1.x = ds_selected;
+     packed_varying_1.yz = ds_pos.xy;
+ }
+
+ uniform float const_table[116];
+
+ uniform float draw_table[1];
+ float ds_draw_zbias = 0.0;
+
+ uniform float pass_table[50];
+ mat4 ds_camera_projection = mat4(0.0);
+ mat4 ds_camera_view = mat4(0.0);
+ mat4 ds_camera_inv = mat4(0.0);
+ float ds_dpi_factor = 0.0;
+ float ds_dpi_dilate = 0.0;
+
+ uniform float user_table[1];
+ float ds_size = 0.0;
+
+ uniform float view_table[16];
+ mat4 ds_view_transform = mat4(0.0);
+
+
+
+
+ varying vec4 packed_varying_0;
+ varying vec3 packed_varying_1;
+
+ vec2 ds_rect_size=vec2(0.0);
+ float ds_check_type=0.0;
+ float ds_hover=0.0;
+ float ds_selected=0.0;
+ vec2 ds_pos=vec2(0.0);
+ struct struct_5_28 {
+     vec2 f_pos;
+     vec4 f_result;
+     vec2 f_last_pos;
+     vec2 f_start_pos;
+     float f_shape;
+     float f_clip;
+     float f_has_clip;
+     float f_old_shape;
+     float f_blur;
+     float f_aa;
+     float f_scale_factor;
+     float f_dist;
+ };
+
+ void fn_5_70_line_to(inout struct_5_28 var_self_0, float var_x_0, float var_y_0) {
+     vec2 var_p_0 = vec2(var_x_0, var_y_0);
+     vec2 var_pa_0 = (var_self_0.f_pos - var_self_0.f_last_pos);
+     vec2 var_ba_0 = (var_p_0 - var_self_0.f_last_pos);
+     float var_h_0 = clamp((dot(var_pa_0, var_ba_0) / dot(var_ba_0, var_ba_0)), const_table[110], const_table[111]);
+     float var_s_0 = sign(((var_pa_0.x * var_ba_0.y) - (var_pa_0.y * var_ba_0.x)));
+     (var_self_0.f_dist = (length((var_pa_0 - (var_ba_0 * var_h_0))) / var_self_0.f_scale_factor));
+     (var_self_0.f_old_shape = var_self_0.f_shape);
+     (var_self_0.f_shape = min(var_self_0.f_shape, var_self_0.f_dist));
+     (var_self_0.f_clip = max(var_self_0.f_clip, (var_self_0.f_dist * var_s_0)));
+     (var_self_0.f_has_clip = const_table[112]);
+     (var_self_0.f_last_pos = var_p_0);
+ }
+
+ void fn_5_69_move_to(inout struct_5_28 var_self_0, float var_x_0, float var_y_0) {
+     (var_self_0.f_last_pos = (var_self_0.f_start_pos = vec2(var_x_0, var_y_0)));
+ }
+
+ void fn_5_63_box(inout struct_5_28 var_self_0, float var_x_0, float var_y_0, float var_w_0, float var_h_0, float var_r_0) {
+     vec2 var_p_0 = (var_self_0.f_pos - vec2(var_x_0, var_y_0));
+     vec2 var_size_0 = vec2((const_table[103] * var_w_0), (const_table[104] * var_h_0));
+     vec2 var_bp_0 = max((android_abs_fix((var_p_0 - var_size_0.xy)) - (var_size_0.xy - vec2((const_table[105] * var_r_0), (const_table[106] * var_r_0)).xy)), vec2(const_table[107], const_table[108]));
+     (var_self_0.f_dist = ((length(var_bp_0) - (const_table[109] * var_r_0)) / var_self_0.f_scale_factor));
+     (var_self_0.f_old_shape = var_self_0.f_shape);
+     (var_self_0.f_shape = min(var_self_0.f_shape, var_self_0.f_dist));
+ }
+
+ void fn_5_61_circle(inout struct_5_28 var_self_0, float var_x_0, float var_y_0, float var_r_0) {
+     vec2 var_c_0 = (var_self_0.f_pos - vec2(var_x_0, var_y_0));
+     float var_len_0 = sqrt(((var_c_0.x * var_c_0.x) + (var_c_0.y * var_c_0.y)));
+     (var_self_0.f_dist = ((var_len_0 - var_r_0) / var_self_0.f_scale_factor));
+     (var_self_0.f_old_shape = var_self_0.f_shape);
+     (var_self_0.f_shape = min(var_self_0.f_shape, var_self_0.f_dist));
+ }
+
+ void fn_5_60_blend(inout struct_5_28 var_self_0, float var_k_0) {
+     (var_self_0.f_old_shape = (var_self_0.f_shape = mix(var_self_0.f_old_shape, var_self_0.f_dist, var_k_0)));
+ }
+
+ void fn_5_58_subtract(inout struct_5_28 var_self_0) {
+     (var_self_0.f_old_shape = (var_self_0.f_shape = max(-var_self_0.f_dist, var_self_0.f_old_shape)));
+ }
+
+ float fn_5_47_calc_blur(inout struct_5_28 var_self_0, float var_w_0) {
+     float var_wa_0 = clamp((-var_w_0 * var_self_0.f_aa), const_table[97], const_table[98]);
+     float var_wb_0 = const_table[99];
+     if(var_self_0.f_blur > const_table[100]) {
+             (var_wb_0 = clamp((-var_w_0 / var_self_0.f_blur), const_table[101], const_table[102]));
+     }
+
+     return (var_wa_0 * var_wb_0);
+ }
+
+ vec4 fn_5_52_stroke_keep(inout struct_5_28 var_self_0, vec4 var_color_0, float var_width_0) {
+     float var_f_0 = fn_5_47_calc_blur (var_self_0, (android_abs_fix(var_self_0.f_shape) - (var_width_0 / var_self_0.f_scale_factor)));
+     vec4 var_source_0 = vec4((var_color_0.rgb * var_color_0.a), var_color_0.a);
+     vec4 var_dest_0 = var_self_0.f_result;
+     (var_self_0.f_result = ((var_source_0 * var_f_0) + (var_dest_0 * (const_table[96] - (var_source_0.a * var_f_0)))));
+     return var_self_0.f_result;
+ }
+
+ vec4 fn_5_53_stroke(inout struct_5_28 var_self_0, vec4 var_color_0, float var_width_0) {
+     fn_5_52_stroke_keep (var_self_0, var_color_0, var_width_0);
+     (var_self_0.f_old_shape = (var_self_0.f_shape = const_table[93]));
+     (var_self_0.f_clip = -const_table[94]);
+     (var_self_0.f_has_clip = const_table[95]);
+     return var_self_0.f_result;
+ }
+
+ vec4 fn_5_48_fill_keep(inout struct_5_28 var_self_0, vec4 var_color_0) {
+     float var_f_0 = fn_5_47_calc_blur (var_self_0, var_self_0.f_shape);
+     vec4 var_source_0 = vec4((var_color_0.rgb * var_color_0.a), var_color_0.a);
+     (var_self_0.f_result = ((var_source_0 * var_f_0) + (var_self_0.f_result * (const_table[89] - (var_source_0.a * var_f_0)))));
+     if(var_self_0.f_has_clip > const_table[90]) {
+             float var_f2_0 = (const_table[91] - fn_5_47_calc_blur (var_self_0, -var_self_0.f_clip));
+         (var_self_0.f_result = ((var_source_0 * var_f2_0) + (var_self_0.f_result * (const_table[92] - (var_source_0.a * var_f2_0)))));
+     }
+
+     return var_self_0.f_result;
+ }
+
+ vec4 fn_5_49_fill(inout struct_5_28 var_self_0, vec4 var_color_0) {
+     fn_5_48_fill_keep (var_self_0, var_color_0);
+     (var_self_0.f_old_shape = (var_self_0.f_shape = const_table[86]));
+     (var_self_0.f_clip = -const_table[87]);
+     (var_self_0.f_has_clip = const_table[88]);
+     return var_self_0.f_result;
+ }
+
+ float fn_5_41_antialias(vec2 var_p_0) {
+     return (const_table[85] / length(vec2(length(dFdx(var_p_0)), length(dFdy(var_p_0)))));
+ }
+
+ struct_5_28 fn_5_42_viewport(vec2 var_pos_0) {
+     return struct_5_28(var_pos_0,vec4(const_table[75]),vec2(const_table[76]),vec2(const_table[77]),const_table[78],-const_table[79],const_table[80],const_table[81],const_table[82],fn_5_41_antialias (var_pos_0),const_table[83],const_table[84]);
+ }
+
+ vec4 fn_47_902_pixel() {
+     struct_5_28 var_sdf_0 = fn_5_42_viewport ((ds_pos * ds_rect_size));
+     if(abs(ds_check_type - 1.0)<0.5){
+             float var_left_0 = const_table[1];
+         float var_sz_0 = ds_size;
+         vec2 var_c_0 = vec2((var_left_0 + var_sz_0), (ds_rect_size.y * const_table[2]));
+         fn_5_63_box (var_sdf_0, var_left_0, (var_c_0.y - var_sz_0), (var_sz_0 * const_table[3]), (var_sz_0 * const_table[4]), const_table[5]);
+         fn_5_48_fill_keep (var_sdf_0, mix(mix(vec4(const_table[6], const_table[7], const_table[8], const_table[9]), vec4(const_table[10], const_table[11], const_table[12], const_table[13]), pow(ds_pos.y, const_table[14])), mix(vec4(const_table[15], const_table[16], const_table[17], const_table[18]), vec4(const_table[19], const_table[20], const_table[21], const_table[22]), pow(ds_pos.y, const_table[23])), ds_hover));
+         fn_5_53_stroke (var_sdf_0, vec4(const_table[24], const_table[25], const_table[26], const_table[27]), const_table[28]);
+         float var_szs_0 = (var_sz_0 * const_table[29]);
+         float var_dx_0 = const_table[30];
+         fn_5_69_move_to (var_sdf_0, (var_left_0 + const_table[31]), var_c_0.y);
+         fn_5_70_line_to (var_sdf_0, var_c_0.x, (var_c_0.y + var_szs_0));
+         fn_5_70_line_to (var_sdf_0, (var_c_0.x + var_szs_0), (var_c_0.y - var_szs_0));
+         fn_5_53_stroke (var_sdf_0, mix(vec4(const_table[32], const_table[33], const_table[34], const_table[35]), vec4(const_table[36], const_table[37], const_table[38], const_table[39]), ds_selected), const_table[40]);
+     }else  if(abs(ds_check_type - 2.0)<0.5){
+             float var_sz_0 = ds_size;
+         float var_left_0 = (var_sz_0 + const_table[41]);
+         vec2 var_c_0 = vec2((var_left_0 + var_sz_0), (ds_rect_size.y * const_table[42]));
+         fn_5_61_circle (var_sdf_0, var_left_0, var_c_0.y, var_sz_0);
+         fn_5_49_fill (var_sdf_0, vec4(const_table[43], const_table[44], const_table[45], const_table[46]));
+         float var_isz_0 = (var_sz_0 * const_table[47]);
+         fn_5_61_circle (var_sdf_0, var_left_0, var_c_0.y, var_isz_0);
+         fn_5_49_fill (var_sdf_0, mix(vec4(const_table[48], const_table[49], const_table[50], const_table[51]), vec4(const_table[52], const_table[53], const_table[54], const_table[55]), ds_selected));
+     }else  if(abs(ds_check_type - 3.0)<0.5){
+             float var_sz_0 = ds_size;
+         float var_left_0 = (var_sz_0 + const_table[56]);
+         vec2 var_c_0 = vec2((var_left_0 + var_sz_0), (ds_rect_size.y * const_table[57]));
+         fn_5_63_box (var_sdf_0, var_left_0, (var_c_0.y - var_sz_0), (var_sz_0 * const_table[58]), (var_sz_0 * const_table[59]), (const_table[60] * var_sz_0));
+         fn_5_49_fill (var_sdf_0, vec4(const_table[61], const_table[62], const_table[63], const_table[64]));
+         float var_isz_0 = (var_sz_0 * const_table[65]);
+         fn_5_61_circle (var_sdf_0, ((var_left_0 + var_sz_0) + (ds_selected * var_sz_0)), var_c_0.y, var_isz_0);
+         fn_5_61_circle (var_sdf_0, ((var_left_0 + var_sz_0) + (ds_selected * var_sz_0)), var_c_0.y, (const_table[66] * var_isz_0));
+         fn_5_58_subtract (var_sdf_0);
+         fn_5_61_circle (var_sdf_0, ((var_left_0 + var_sz_0) + (ds_selected * var_sz_0)), var_c_0.y, var_isz_0);
+         fn_5_60_blend (var_sdf_0, ds_selected);
+         fn_5_49_fill (var_sdf_0, vec4(const_table[67], const_table[68], const_table[69], const_table[70]));
+     }else  if(abs(ds_check_type - 4.0)<0.5){
+             return vec4(const_table[71], const_table[72], const_table[73], const_table[74]);
+     }
+     return var_sdf_0.f_result;
+ }
+
+ void main() {
+     ds_draw_zbias = draw_table[0];
+
+     ds_camera_projection = mat4(pass_table[0], pass_table[1], pass_table[2], pass_table[3], pass_table[4], pass_table[5], pass_table[6], pass_table[7], pass_table[8], pass_table[9], pass_table[10], pass_table[11], pass_table[12], pass_table[13], pass_table[14], pass_table[15]);
+     ds_camera_view = mat4(pass_table[16], pass_table[17], pass_table[18], pass_table[19], pass_table[20], pass_table[21], pass_table[22], pass_table[23], pass_table[24], pass_table[25], pass_table[26], pass_table[27], pass_table[28], pass_table[29], pass_table[30], pass_table[31]);
+     ds_camera_inv = mat4(pass_table[32], pass_table[33], pass_table[34], pass_table[35], pass_table[36], pass_table[37], pass_table[38], pass_table[39], pass_table[40], pass_table[41], pass_table[42], pass_table[43], pass_table[44], pass_table[45], pass_table[46], pass_table[47]);
+     ds_dpi_factor = pass_table[48];
+     ds_dpi_dilate = pass_table[49];
+
+     ds_size = user_table[0];
+
+     ds_view_transform = mat4(view_table[0], view_table[1], view_table[2], view_table[3], view_table[4], view_table[5], view_table[6], view_table[7], view_table[8], view_table[9], view_table[10], view_table[11], view_table[12], view_table[13], view_table[14], view_table[15]);
+
+     ds_rect_size.xy = packed_varying_0.xy;
+     ds_check_type = packed_varying_0.z;
+     ds_hover = packed_varying_0.w;
+     ds_selected = packed_varying_1.x;
+     ds_pos.xy = packed_varying_1.yz;
+
+     gl_FragColor = fn_47_902_pixel();
+ }

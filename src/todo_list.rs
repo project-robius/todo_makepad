@@ -34,15 +34,22 @@ live_design!{
     }
 }
 
+#[derive(Clone, DefaultNone, Debug)]
+pub enum TodoUpdateAction {
+    Changed(u64, bool),
+    None,
+}
+
 #[derive(Clone, Debug, Default, Eq, Hash, Copy, PartialEq, FromLiveId)]
 pub struct CheckBoxId(pub LiveId);
 
-#[derive(Live)]
+#[derive(Live, LiveHook, Widget)]
 pub struct TodoList {
     // It is mandatory to list here all the fields that are part of the live design block.
     // You need to annotate them with `#[live]`
     #[walk] walk: Walk,
     #[layout] layout: Layout,
+    #[rust] #[redraw] area: Area,
 
     // This is also refered in the live design block, but it is not meant to be rendered automatically.
     // This is like a template element, that is used to create concrete instances that are
@@ -55,60 +62,24 @@ pub struct TodoList {
     #[rust] items: ComponentMap<CheckBoxId, CheckBoxRef>
 }
 
-impl LiveHook for TodoList {
-    fn before_live_design(cx:&mut Cx){
-        register_widget!(cx, TodoList);
-    }
-}
-
 impl Widget for TodoList {
-    fn handle_widget_event_with(
-        &mut self,
-        cx: &mut Cx,
-        event: &Event,
-        dispatch_action: &mut dyn FnMut(&mut Cx, WidgetActionItem)
-    ) {
-        self.handle_event_with(cx, event, &mut | cx, action | {
-            dispatch_action(cx, action);
-        });
-    }
-
-    fn walk(&mut self, _cx:&mut Cx) -> Walk {self.walk}
- 
-    fn redraw(&mut self, _cx:&mut Cx){
-        // Not sure how I can implement this method if I don't have an Area
-        // (which is what I see in many examples).
-        // I don't know what is an Area used for.
-
-        //self.area.redraw(cx)
-    }
-
-    fn draw_walk_widget(&mut self, cx: &mut Cx2d, walk: Walk) -> WidgetDraw {
-        let _ = self.draw_walk(cx, walk);
-        WidgetDraw::done()
-    }
-}
-
-impl TodoList {
-    pub fn handle_event_with(
-        &mut self,
-        cx: &mut Cx,
-        event: &Event,
-        dispatch_action: &mut dyn FnMut(&mut Cx, WidgetActionItem),
-    ) {
+    fn handle_event(&mut self, cx: &mut Cx, event: &Event, scope: &mut Scope) {
+        let widget_uid = self.widget_uid();
         for (id, item) in self.items.iter_mut() {
             // This id is actually the item id set by the server.
-            let item_uid = WidgetUid(id.0.0);
+            let item_uid = id.0.0;
 
             if let Some(mut inner) = item.borrow_mut(){
-                inner.handle_event_with(cx, event, &mut | cx_imm, action | {
-                    dispatch_action(cx_imm, WidgetActionItem::new(action.into(), item_uid));
-                });
+                for action in cx.capture_actions(|cx| inner.handle_event(cx, event, scope)) {
+                    if let CheckBoxAction::Change(value) = action.as_widget_action().cast() {
+                        cx.widget_action(widget_uid, &scope.path, TodoUpdateAction::Changed(item_uid, value));
+                    }
+                }
             }
         }
     }
 
-    pub fn draw_walk(&mut self, cx: &mut Cx2d, walk: Walk) {
+    fn draw_walk(&mut self, cx: &mut Cx2d, scope: &mut Scope, walk: Walk) -> DrawStep {
         // This was needed to apply the layout defined for TodoList in the live design block.
         // Otherwise, it is ignored.
         cx.begin_turtle(walk, self.layout);
@@ -121,14 +92,20 @@ impl TodoList {
             });
             current_checkbox.set_text(&value.text);
             current_checkbox.set_selected(cx, value.done);
-            let _ = current_checkbox.draw_walk_widget(cx, walk);
+            let _ = current_checkbox.draw_all(cx, scope);
         }
 
         cx.end_turtle();
         self.items.retain_visible();
-    }
 
+        DrawStep::done()
+    }
+}
+
+impl TodoListRef {
     pub fn set_todos(&mut self, todos: Vec<TodoItem>) {
-        self.todos = todos
+        if let Some(mut inner) = self.borrow_mut() {
+            inner.todos = todos;
+        }
     }
 }
